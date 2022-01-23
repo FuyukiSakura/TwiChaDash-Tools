@@ -10,6 +10,9 @@ namespace ObsCommentGenerator
 {
     class Program
     {
+        static string _outputFolder = "";
+        static string _lastCommentNo = "";
+
         static void Main(string[] args)
         {
             var folder = Path.GetDirectoryName(args[0]);
@@ -17,6 +20,7 @@ namespace ObsCommentGenerator
             using var watcher = new FileSystemWatcher(folder, filename);
             watcher.EnableRaisingEvents = true;
             watcher.Changed += OnChanged;
+            _outputFolder = args[1];
 
             Console.WriteLine("Press enter to exit.");
             Console.ReadLine();
@@ -32,8 +36,13 @@ namespace ObsCommentGenerator
             try
             {
                 Task.Delay(100); // Add slight delay to allow system to finish writing the file
-                var comments = GetMyComments(e.FullPath);
-                Console.WriteLine(string.Join("\r\n", comments.Select(cm => cm.Message)));
+                var comments = GetMyComments(e.FullPath).ToArray();
+                if (!comments.Any())
+                {
+                    // No elements
+                    return;
+                }
+                WriteMyComment(comments.Last());
             }
             catch (IOException)
             {
@@ -63,5 +72,20 @@ namespace ObsCommentGenerator
             return comments;
         }
 
+        /// <summary>
+        /// Writes the latest comment to the output file
+        /// </summary>
+        /// <param name="comment"></param>
+        static void WriteMyComment(Comment comment)
+        {
+            if (comment.No == _lastCommentNo)
+            {
+                // Same comment do nothing
+                return;
+            }
+
+            _lastCommentNo = comment.No;
+            File.WriteAllText(_outputFolder, comment.Message);
+        }
     }
 }
