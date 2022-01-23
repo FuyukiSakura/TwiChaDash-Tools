@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 using ObsCommentGenerator.Models;
 
@@ -10,9 +12,33 @@ namespace ObsCommentGenerator
     {
         static void Main(string[] args)
         {
-            var comments = GetMyComments(args[0]);
-            Console.WriteLine(string.Join("\r\n", comments.Select(cm => cm.Message)));
+            var folder = Path.GetDirectoryName(args[0]);
+            var filename = Path.GetFileName(args[0]);
+            using var watcher = new FileSystemWatcher(folder, filename);
+            watcher.EnableRaisingEvents = true;
+            watcher.Changed += OnChanged;
+
+            Console.WriteLine("Press enter to exit.");
             Console.ReadLine();
+        }
+
+        /// <summary>
+        /// Get the comments when file change is detected
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        static void OnChanged(object sender, FileSystemEventArgs e)
+        {
+            try
+            {
+                Task.Delay(100); // Add slight delay to allow system to finish writing the file
+                var comments = GetMyComments(e.FullPath);
+                Console.WriteLine(string.Join("\r\n", comments.Select(cm => cm.Message)));
+            }
+            catch (IOException)
+            {
+                // File not finish writing or windows bug
+            }
         }
 
         /// <summary>
@@ -22,8 +48,8 @@ namespace ObsCommentGenerator
         /// <returns></returns>
         static IEnumerable<Comment> GetMyComments(string filename)
         {
-            // load xml file
-            var xml = XDocument.Load(filename);
+            var xmlFile = new MemoryStream(File.ReadAllBytes(filename));
+            var xml = XDocument.Load(xmlFile);
 
             var log = xml.Root?.Descendants("comment");
             var comments = log?
@@ -31,10 +57,11 @@ namespace ObsCommentGenerator
                                   && comment.Attribute("handle")!.Value == "")
                 .Select(comment => new Comment
                 {
-                    No = comment.Attribute("No")!.Value,
+                    No = comment.Attribute("no")!.Value,
                     Message = comment.Value
                 });
             return comments;
         }
+
     }
 }
