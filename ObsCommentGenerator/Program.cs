@@ -15,12 +15,14 @@ namespace ObsCommentGenerator
 
         static void Main(string[] args)
         {
+            _outputFolder = args[1];
+            File.WriteAllText(_outputFolder, "");
+
             var folder = Path.GetDirectoryName(args[0]);
             var filename = Path.GetFileName(args[0]);
             using var watcher = new FileSystemWatcher(folder, filename);
             watcher.EnableRaisingEvents = true;
             watcher.Changed += OnChanged;
-            _outputFolder = args[1];
 
             Console.WriteLine("Press enter to exit.");
             Console.ReadLine();
