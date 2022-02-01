@@ -32,7 +32,7 @@ So the options actually means
 
 ### Start TwiChaDash OBS Comment Generator
 
-1. Download the latest release from the [Release page](./release/latest).
+1. Download the latest release from the [Release page](../../releases/latest).
 2. Extract the program to anywhere you like.
 3. Use a command prompt and execute the command as follow
 
